@@ -10,6 +10,8 @@ EnvironmentFile=/etc/anglais.env
 Environment=DATA_DIR=/var/lib/anglais STATIC_DIR=/opt/anglais/dist
 # claude (installé dans /root/.local/bin), curl et ffmpeg doivent être trouvés par le serveur et la préparation.
 Environment=PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+# La CLI claude range sa configuration dans $HOME, que systemd ne définit pas sans User=.
+Environment=HOME=/root
 ExecStart=/usr/local/bin/node src/index.ts
 Restart=on-failure
 RestartSec=5

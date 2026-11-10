@@ -82,6 +82,14 @@ test("le deck « Anglais » est créé s'il manque, réutilisé sinon", async ()
   expect(n.lot().map((c) => c.deckId)).toEqual([5, 5]);
 });
 
+test('deux envois simultanés : un seul deck créé, chaque carte envoyée une fois', async () => {
+  const m = fauxMnemo();
+  const resultats = await Promise.all([envoyerEnAttente(db, m.requete), envoyerEnAttente(db, m.requete)]);
+  expect(resultats).toEqual([{ envoyes: 1, restants: 0 }, { envoyes: 0, restants: 0 }]);
+  expect(m.appels.filter((a) => a === 'POST /api/decks')).toHaveLength(1);
+  expect(m.appels.filter((a) => a === 'POST /api/cards/batch')).toHaveLength(1);
+});
+
 test('jeton expiré (401) → reconnexion puis envoi', async () => {
   db.prepare("INSERT INTO reglages (cle, valeur) VALUES ('mnemoJeton', 'vieux'), ('mnemoDeck', '7')").run();
   const m = fauxMnemo({ expireUneFois: true });

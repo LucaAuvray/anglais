@@ -3,11 +3,11 @@ import { api } from '../api.ts';
 import { Chrono } from './chrono.ts';
 
 /** Un Chrono pour la page : tic chaque seconde, touchers et défilements, onglet visible ou non, envoi à la sortie. */
-export function useChrono(joue: boolean): void {
+export function useChrono(joue: boolean, lecture = true): void {
   const chrono = useRef<Chrono | null>(null);
 
   useEffect(() => {
-    const c = new Chrono((type, secondes) => void api.temps(type, secondes).catch(() => {}));
+    const c = new Chrono((type, secondes) => void api.temps(type, secondes).catch(() => {}), Date.now, { lecture });
     chrono.current = c;
     c.visible(document.visibilityState === 'visible');
     const interaction = () => c.interaction();
@@ -29,7 +29,7 @@ export function useChrono(joue: boolean): void {
       c.arreter();
       chrono.current = null;
     };
-  }, []);
+  }, [lecture]);
 
   useEffect(() => { chrono.current?.audio(joue); }, [joue]);
 }

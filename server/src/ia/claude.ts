@@ -10,6 +10,9 @@ import { config } from '../config.ts';
 // 10 min et non 5 comme Mnemo : un article de 450 mots annoté mot à mot a pris près de 5 min (10/11/2026).
 const DELAI_MS = 10 * 60_000;
 
+/** Claude inutilisable pour tous les articles (quota atteint, CLI absente) : inutile d'essayer le suivant. */
+export class PanneClaude extends Error {}
+
 export function appelerClaude(systeme: string, prompt: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const p = spawn(
@@ -25,7 +28,7 @@ export function appelerClaude(systeme: string, prompt: string): Promise<string> 
     p.stdout.on('data', (d: string) => (out += d));
     // Sans ce gestionnaire, une CLI absente fait lever EPIPE sur stdin, hors de toute promesse.
     p.stdin.on('error', () => {});
-    p.on('error', (e) => reject(new Error(`Claude Code introuvable : ${e.message}`)));
+    p.on('error', (e) => reject(new PanneClaude(`Claude Code introuvable : ${e.message}`)));
     p.on('close', (_code, signal) => {
       if (signal) return reject(new Error("Claude n'a pas répondu en 10 minutes."));
       let result: { subtype?: string; is_error?: boolean; result?: string } | undefined;
@@ -36,7 +39,7 @@ export function appelerClaude(systeme: string, prompt: string): Promise<string> 
         if (e.type === 'rate_limit_event' && e.rate_limit_info?.status === 'rejected') refuse = true;
         if (e.type === 'result') result = e as typeof result;
       }
-      if (refuse) return reject(new Error("Quota de l'abonnement Claude atteint."));
+      if (refuse) return reject(new PanneClaude("Quota de l'abonnement Claude atteint."));
       if (!result || result.is_error || result.subtype !== 'success' || !result.result) {
         return reject(new Error(`Erreur Claude : ${String(result?.result ?? 'réponse illisible').slice(0, 200)}`));
       }

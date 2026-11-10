@@ -37,6 +37,7 @@ try {
   }
   console.log(`${n} article(s) préparé(s).`);
 } finally {
-  await voix.fermer();
+  // Une voix qui n'a pas pu se charger relancerait son erreur ici : le verrou doit être rendu quand même.
+  await voix.fermer().catch(() => {});
   rendreVerrou(config.dataDir);
 }

@@ -55,9 +55,11 @@ export function creerRoutes(db: DatabaseSync, options: Options = {}): Router {
     return t;
   };
   const proposition = () => {
-    const lus = db.prepare("SELECT mots, touches FROM articles WHERE statut = 'lu' AND touches IS NOT NULL AND luLe >= ? ORDER BY luLe DESC")
-      .all(reglage('palierDepuis')) as { mots: number; touches: number }[];
-    return proposerPalier(lus, reglage('palier') as Palier);
+    const palier = reglage('palier') as Palier;
+    // Seuls les articles du niveau en cours : les non-lus préparés avant un changement ne disent rien du nouveau.
+    const lus = db.prepare("SELECT mots, touches FROM articles WHERE statut = 'lu' AND touches IS NOT NULL AND luLe >= ? AND palier = ? ORDER BY luLe DESC")
+      .all(reglage('palierDepuis'), palier) as { mots: number; touches: number }[];
+    return proposerPalier(lus, palier);
   };
 
   r.get('/aujourdhui', (_req, res) => {
@@ -121,6 +123,8 @@ export function creerRoutes(db: DatabaseSync, options: Options = {}): Router {
 
   r.post('/preparer', (_req, res) => {
     if (preparationEnCours(dataDir)) return void res.status(409).json({ error: 'Une préparation est déjà en cours.' });
+    const nonLus = (db.prepare("SELECT COUNT(*) AS n FROM articles WHERE statut = 'pret'").get() as { n: number }).n;
+    if (nonLus >= 4) return void res.status(409).json({ error: 'Liste pleine : lisez un article avant d’en demander d’autres.' });
     lancer();
     res.status(202).json({ ok: true });
   });

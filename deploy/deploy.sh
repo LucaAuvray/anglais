@@ -25,7 +25,9 @@ npm --prefix server run build
 npm run build
 
 etape "Envoi vers $HOTE"
-ARCHIVE="$(mktemp -d)/anglais.tar"
+TEMP="$(mktemp -d)"
+trap 'rm -rf "$TEMP"' EXIT
+ARCHIVE="$TEMP/anglais.tar"
 git archive --format=tar -o "$ARCHIVE" HEAD
 tar -rf "$ARCHIVE" dist
 scp -q "$ARCHIVE" "$HOTE:/tmp/anglais.tar"
@@ -35,6 +37,12 @@ ssh "$HOTE" VERSION="$VERSION" bash -s <<'DISTANT'
 set -euo pipefail
 export PATH=/usr/local/bin:$PATH
 NOUVEAU=/opt/anglais.nouveau
+# Redémarrer le service tuerait une préparation lancée par « Autres articles » (même cgroup).
+VERROU=/var/lib/anglais/preparation.lock
+if [ -s "$VERROU" ] && kill -0 "$(cat "$VERROU")" 2>/dev/null; then
+  echo "Une préparation tourne (PID $(cat "$VERROU")) : relancer le déploiement quand elle sera finie." >&2
+  exit 1
+fi
 rm -rf "$NOUVEAU" && mkdir -p "$NOUVEAU"
 tar -xf /tmp/anglais.tar -C "$NOUVEAU" && rm /tmp/anglais.tar
 npm --prefix "$NOUVEAU/server" ci --omit=dev --no-audit --no-fund --loglevel=error
@@ -62,6 +70,17 @@ for _ in $(seq 1 20); do
   if curl -fs localhost:3010/api/sante >/dev/null; then echo "Version $VERSION en service : $(curl -fs localhost:3010/api/sante)"; exit 0; fi
   sleep 1
 done
-echo "Le serveur ne répond pas : journalctl -u anglais -n 50" >&2
+echo "La version $VERSION ne répond pas :" >&2
+journalctl -u anglais -n 30 --no-pager >&2 || true
+# Retour à la version précédente, unités comprises ; la version en échec reste dans /opt/anglais.echec.
+if [ -d /opt/anglais.ancien ]; then
+  rm -rf /opt/anglais.echec
+  mv /opt/anglais /opt/anglais.echec
+  mv /opt/anglais.ancien /opt/anglais
+  cp /opt/anglais/deploy/anglais.service /opt/anglais/deploy/anglais-preparation.service /opt/anglais/deploy/anglais-preparation.timer /etc/systemd/system/
+  systemctl daemon-reload
+  systemctl restart anglais.service
+  echo "Retour à la version précédente fait." >&2
+fi
 exit 1
 DISTANT

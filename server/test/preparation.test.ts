@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { ouvrir } from '../src/db.ts';
+import { PanneClaude } from '../src/ia/claude.ts';
 import type { ArticleReecrit } from '../src/ia/reecrire.ts';
 import { ajouter, completer, type Deps, prendreVerrou, preparationEnCours, rendreVerrou } from '../src/preparation.ts';
 import { SUJETS, type Phrase } from '../src/types.ts';
@@ -123,10 +124,20 @@ test('le tour des sujets avance à chaque préparation', async () => {
   expect(reglage('tourSujets')).toBe('1');
 });
 
-test('ajouter prépare 2 articles de plus sans regarder la cible', async () => {
-  await completer(db, deps);
+test('ajouter prépare jusqu’à 2 articles sans dépasser 4 non lus (sinon ils resteraient cachés)', async () => {
   expect(await ajouter(db, deps)).toBe(2);
-  expect(sujetsPrets()).toHaveLength(6);
+  inserer('https://autre.test/a');
+  expect(await ajouter(db, deps)).toBe(1);
+  expect(sujetsPrets()).toHaveLength(4);
+  expect(await ajouter(db, deps)).toBe(0);
+  expect(deps.reecrire).toHaveBeenCalledTimes(3);
+});
+
+test("Claude en panne (quota, CLI absente) → préparation arrêtée au premier échec, vidéos quand même ajoutées", async () => {
+  vi.mocked(deps.reecrire).mockRejectedValue(new PanneClaude("Quota de l'abonnement Claude atteint."));
+  expect(await completer(db, deps)).toBe(0);
+  expect(deps.reecrire).toHaveBeenCalledTimes(1);
+  expect(db.prepare('SELECT COUNT(*) AS n FROM videos').get()).toEqual({ n: 2 });
 });
 
 test('au plus 2 vidéos nouvelles par jour, jamais deux fois la même', async () => {
@@ -159,6 +170,10 @@ test('verrou : le second est refusé ; un verrou dont le processus est mort est 
   expect(preparationEnCours(dir)).toBe(true);
   expect(prendreVerrou(dir)).toBe(false);
   writeFileSync(path.join(dir, 'preparation.lock'), '999999');
+  expect(preparationEnCours(dir)).toBe(false);
+  expect(prendreVerrou(dir)).toBe(true);
+  // Un verrou vide donnerait le PID 0, que kill(0, 0) dit « vivant » : bloqué pour toujours.
+  writeFileSync(path.join(dir, 'preparation.lock'), '');
   expect(preparationEnCours(dir)).toBe(false);
   expect(prendreVerrou(dir)).toBe(true);
   rendreVerrou(dir);

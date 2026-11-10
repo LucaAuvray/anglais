@@ -37,6 +37,7 @@ export default function Aujourdhui() {
   if (erreur) return <p className="text-red-700 dark:text-red-400">Serveur injoignable : {erreur}</p>;
   if (!jour) return <p className="text-stone-500">Chargement…</p>;
   const { temps } = jour;
+  const pleine = jour.articles.length >= 4; // le serveur refuse aussi : des articles en plus resteraient cachés
 
   return (
     <main className="space-y-6">
@@ -96,10 +97,13 @@ export default function Aujourdhui() {
         </ul>
       </section>
 
-      <button onClick={autres} disabled={enCours}
+      <button onClick={autres} disabled={enCours || pleine}
         className="w-full rounded-xl border border-stone-300 px-4 py-3 disabled:opacity-60 dark:border-stone-700">
         {enCours ? 'Préparation en cours… (environ 7 min par article)' : 'Autres articles'}
       </button>
+      {pleine && !enCours && (
+        <p className="text-center text-sm text-stone-500">La liste est pleine : lisez un article pour en demander d'autres.</p>
+      )}
     </main>
   );
 }

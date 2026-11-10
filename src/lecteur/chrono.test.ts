@@ -49,6 +49,23 @@ test("arreter envoie le reste non encore envoyé, et rien de plus à l'appel sui
   expect(envois).toEqual([['lecture', 5]]);
 });
 
+test('onglet caché → le reste part tout de suite (sur téléphone, la fermeture vient souvent ensuite sans prévenir)', () => {
+  tics(5);
+  c.visible(false);
+  expect(envois).toEqual([['lecture', 5]]);
+});
+
+test('vidéo : sans lecture comptée, seul le temps de lecture de la vidéo compte', () => {
+  c = new Chrono((type, secondes) => envois.push([type, secondes]), () => t, { lecture: false });
+  tics(10);
+  c.audio(true);
+  tics(5);
+  c.audio(false);
+  tics(10);
+  c.arreter();
+  expect(envois).toEqual([['ecoute', 5]]);
+});
+
 test("la fin de l'audio relance le délai de lecture", () => {
   c.audio(true);
   tics(120);

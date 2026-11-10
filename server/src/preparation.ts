@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
+import { PanneClaude } from './ia/claude.ts';
 import type { ArticleReecrit } from './ia/reecrire.ts';
 import { jourCourant } from './jour.ts';
 import { choisirSujets, type extraireTexte, type lireChaine, type lireFlux } from './sources.ts';
@@ -46,14 +47,19 @@ async function elements(db: DatabaseSync, deps: Deps, sujet: Sujet, cache: Map<s
   return tous.sort((a, b) => b.publieLe.localeCompare(a.publieLe));
 }
 
-/** Prépare un article jusqu'au bout ou rien : 'voix' signale un moteur de voix en panne. */
-async function preparerUn(db: DatabaseSync, deps: Deps, sujet: Sujet, palier: Palier, el: Element): Promise<'pret' | 'ecarte' | 'voix'> {
+/** Prépare un article jusqu'au bout ou rien : 'panne' signale une voix ou un Claude inutilisables pour tous. */
+async function preparerUn(db: DatabaseSync, deps: Deps, sujet: Sujet, palier: Palier, el: Element): Promise<'pret' | 'ecarte' | 'panne'> {
   let html: string;
   try { html = await deps.telecharger(el.url); } catch (e) { noter(db, deps, 'telechargement', `${el.url} : ${message(e)}`); return 'ecarte'; }
   const texte = deps.extraireTexte(html);
   if (!texte) return 'ecarte'; // mur payant, vidéo, page trop courte : sans appeler l'IA
   let r: ArticleReecrit;
-  try { r = await deps.reecrire({ titre: el.titre, texte }, palier); } catch (e) { noter(db, deps, 'reecriture', `${el.url} : ${message(e)}`); return 'ecarte'; }
+  try {
+    r = await deps.reecrire({ titre: el.titre, texte }, palier);
+  } catch (e) {
+    noter(db, deps, 'reecriture', `${el.url} : ${message(e)}`);
+    return e instanceof PanneClaude ? 'panne' : 'ecarte';
+  }
 
   const n = Number(lire(db, 'compteurArticles'));
   const voix = choisirVoix(n);
@@ -74,7 +80,7 @@ async function preparerUn(db: DatabaseSync, deps: Deps, sujet: Sujet, palier: Pa
   } catch (e) {
     rmSync(path.join(deps.audioDir, dossier), { recursive: true, force: true });
     noter(db, deps, 'voix', `${el.url} : ${message(e)}`);
-    return 'voix';
+    return 'panne';
   }
 
   db.exec('BEGIN');
@@ -109,7 +115,7 @@ async function preparerArticles(db: DatabaseSync, deps: Deps, nombre: number): P
       essayees.add(el.url);
       essais++;
       const r = await preparerUn(db, deps, sujet, palier, el);
-      if (r === 'voix') return prets; // la voix ne marchera pas mieux pour l'article suivant : on n'use pas l'IA
+      if (r === 'panne') return prets; // la voix ou Claude ne marcheront pas mieux pour l'article suivant
       if (r === 'pret') { prets++; break; }
     }
   }
@@ -135,24 +141,30 @@ async function ajouterVideos(db: DatabaseSync, deps: Deps) {
   }
 }
 
-/** Archive les non-lus de plus de 7 jours, complète jusqu'à `cible` non-lus, ajoute les vidéos du jour. */
-export async function completer(db: DatabaseSync, deps: Deps, cible = 4): Promise<number> {
+/** Archive les non-lus de plus de 7 jours et renvoie le nombre de non-lus restants. */
+function archiverEtCompter(db: DatabaseSync, deps: Deps): number {
   const limite = new Date(deps.maintenant().getTime() - 7 * 86_400_000).toISOString();
   db.prepare("UPDATE articles SET statut = 'archive' WHERE statut = 'pret' AND creeLe < ?").run(limite);
-  const nonLus = (db.prepare("SELECT COUNT(*) AS n FROM articles WHERE statut = 'pret'").get() as { n: number }).n;
-  const prets = await preparerArticles(db, deps, cible - nonLus);
-  await ajouterVideos(db, deps);
-  return prets;
+  return (db.prepare("SELECT COUNT(*) AS n FROM articles WHERE statut = 'pret'").get() as { n: number }).n;
 }
 
-/** « Autres articles » : `nombre` de plus, sans regarder la cible. */
-export function ajouter(db: DatabaseSync, deps: Deps, nombre = 2): Promise<number> {
-  return preparerArticles(db, deps, nombre);
+/** Préparation de nuit : vidéos du jour d'abord (elles ne dépendent pas de Claude), puis jusqu'à `cible` non-lus. */
+export async function completer(db: DatabaseSync, deps: Deps, cible = 4): Promise<number> {
+  const nonLus = archiverEtCompter(db, deps);
+  await ajouterVideos(db, deps);
+  return preparerArticles(db, deps, cible - nonLus);
+}
+
+/** « Autres articles » : jusqu'à `nombre` de plus, sans dépasser `cible` non-lus (la liste n'en montre pas davantage). */
+export function ajouter(db: DatabaseSync, deps: Deps, nombre = 2, cible = 4): Promise<number> {
+  return preparerArticles(db, deps, Math.min(nombre, cible - archiverEtCompter(db, deps)));
 }
 
 const verrou = (dataDir: string) => path.join(dataDir, 'preparation.lock');
 
 function vivant(pid: number): boolean {
+  // PID 0 (verrou vide) ou négatif viserait un groupe de processus : jamais un verrou valable.
+  if (!Number.isInteger(pid) || pid <= 0) return false;
   try { process.kill(pid, 0); return true; } catch (e) { return (e as NodeJS.ErrnoException).code === 'EPERM'; }
 }
 

@@ -1,15 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Annotation, Mot } from '../../server/src/types.ts';
 
 type Props = {
   annotation: Annotation;
   statut: Mot['statut'] | null;
-  onMnemo: () => void;
+  onMnemo: () => Promise<void>;
   onFermer: () => void;
 };
 
 /** Fiche d'un mot ou d'une expression : sens dans la phrase, forme de base, prononciation, écoute, + Mnemo. */
 export default function Fiche({ annotation: a, statut, onMnemo, onFermer }: Props) {
+  const [envoi, setEnvoi] = useState<'non' | 'encours' | 'echec'>('non');
+  async function ajouter() {
+    setEnvoi('encours'); // un second toucher ne renvoie pas le mot
+    try { await onMnemo(); setEnvoi('non'); } catch { setEnvoi('echec'); }
+  }
   useEffect(() => {
     const touche = (e: KeyboardEvent) => e.key === 'Escape' && onFermer();
     window.addEventListener('keydown', touche);
@@ -41,7 +46,9 @@ export default function Fiche({ annotation: a, statut, onMnemo, onFermer }: Prop
             statut ? (
               <span className="px-4 py-2 text-sm text-stone-500">{statut === 'envoye' ? 'Envoyé vers Mnemo' : 'En attente d’envoi'}</span>
             ) : (
-              <button onClick={onMnemo} className="rounded-lg bg-indigo-600 px-4 py-2 text-white">+ Mnemo</button>
+              <button onClick={ajouter} disabled={envoi === 'encours'} className="rounded-lg bg-indigo-600 px-4 py-2 text-white disabled:opacity-60">
+                {envoi === 'echec' ? 'Réessayer' : '+ Mnemo'}
+              </button>
             )
           )}
         </div>

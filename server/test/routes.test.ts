@@ -27,10 +27,10 @@ const phrases: Phrase[] = [{
   ],
 }];
 
-function article(statut = 'pret', o: { luLe?: string; touches?: number; mots?: number } = {}): number {
+function article(statut = 'pret', o: { luLe?: string; touches?: number; mots?: number; palier?: string } = {}): number {
   const r = db.prepare(`INSERT INTO articles (url, source, sujet, titre, palier, voix, phrases, mots, dureeMs, statut, creeLe, luLe, touches)
-    VALUES (?, 'ex.test', 'foot', 'Titre', 'A2', 'af_heart', ?, ?, 2000, ?, ?, ?, ?)`)
-    .run(`https://ex.test/${Math.random()}`, JSON.stringify(phrases), o.mots ?? 300, statut, new Date().toISOString(), o.luLe ?? null, o.touches ?? null);
+    VALUES (?, 'ex.test', 'foot', 'Titre', ?, 'af_heart', ?, ?, 2000, ?, ?, ?, ?)`)
+    .run(`https://ex.test/${Math.random()}`, o.palier ?? 'A2', JSON.stringify(phrases), o.mots ?? 300, statut, new Date().toISOString(), o.luLe ?? null, o.touches ?? null);
   return Number(r.lastInsertRowid);
 }
 
@@ -116,6 +116,25 @@ test('POST /temps plafonne à 60 s et refuse le négatif ou un type inconnu', as
   expect(temps.total).toEqual({ ecoute: 60, lecture: 12 });
   expect((await brut('/api/temps', { type: 'ecoute', secondes: -5 })).status).toBe(400);
   expect((await brut('/api/temps', { type: 'sommeil', secondes: 5 })).status).toBe(400);
+});
+
+test('POST /preparer refuse quand 4 articles attendent déjà (liste pleine)', async () => {
+  for (let i = 0; i < 4; i++) article();
+  const r = await brut('/api/preparer');
+  expect(r.status).toBe(409);
+  expect((await r.json()).error).toContain('Liste pleine');
+  expect(lancerPreparation).not.toHaveBeenCalled();
+});
+
+test("après un changement de niveau, seuls les articles du nouveau niveau comptent pour la proposition", async () => {
+  for (let i = 0; i < 5; i++) article('lu', { luLe: new Date().toISOString(), touches: 1 });
+  await post('/api/palier/reponse', { accepte: true }); // A2 → A2+
+  const anciens = Array.from({ length: 5 }, () => article()); // préparés en A2 avant le changement
+  for (const id of anciens) await post(`/api/articles/${id}/lu`, { touches: 1 });
+  expect((await get('/api/aujourdhui')).proposition).toBeNull();
+  const nouveaux = Array.from({ length: 5 }, () => article('pret', { palier: 'A2+' }));
+  for (const id of nouveaux) await post(`/api/articles/${id}/lu`, { touches: 1 });
+  expect((await get('/api/aujourdhui')).proposition).toBe('monter');
 });
 
 test('POST /preparer lance la préparation, 409 si une préparation tourne', async () => {

@@ -26,8 +26,18 @@ class Refus extends Error {}
 const passagere = (e: unknown) =>
   (e instanceof TypeError && e.message === 'fetch failed') || (e instanceof DOMException && e.name === 'TimeoutError');
 
+// Un envoi à la fois : deux envois qui se chevauchent (double toucher, deux mots coup sur coup)
+// enverraient les mêmes mots deux fois et créeraient deux decks « Anglais ».
+let file: Promise<unknown> = Promise.resolve();
+
 /** Envoie les mots en attente vers le deck « Anglais » de Mnemo. Ne lève jamais : ce qui échoue reste en attente. */
-export async function envoyerEnAttente(db: DatabaseSync, requete: typeof fetch = fetch): Promise<{ envoyes: number; restants: number }> {
+export function envoyerEnAttente(db: DatabaseSync, requete: typeof fetch = fetch): Promise<{ envoyes: number; restants: number }> {
+  const resultat = file.then(() => envoyer(db, requete));
+  file = resultat.catch(() => {});
+  return resultat;
+}
+
+async function envoyer(db: DatabaseSync, requete: typeof fetch): Promise<{ envoyes: number; restants: number }> {
   const mots = (db.prepare("SELECT * FROM mots WHERE statut = 'attente' ORDER BY id").all() as unknown as (Omit<Mot, 'expression'> & { expression: number })[])
     .map((m): Mot => ({ ...m, expression: Boolean(m.expression) }));
   if (mots.length === 0) return { envoyes: 0, restants: 0 };

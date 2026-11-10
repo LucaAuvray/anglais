@@ -8,14 +8,17 @@ type Type = 'ecoute' | 'lecture';
 export class Chrono {
   private readonly envoyer: (type: Type, secondes: number) => void;
   private readonly maintenant: () => number;
+  private readonly lecture: boolean;
   private joue = false;
   private estVisible = true;
   private derniere: number;
   private enAttente: Record<Type, number> = { ecoute: 0, lecture: 0 };
 
-  constructor(envoyer: (type: Type, secondes: number) => void, maintenant: () => number = Date.now) {
+  /** `lecture: false` pour la vidéo : seul le temps où elle joue compte (comme de l'écoute). */
+  constructor(envoyer: (type: Type, secondes: number) => void, maintenant: () => number = Date.now, options = { lecture: true }) {
     this.envoyer = envoyer;
     this.maintenant = maintenant;
+    this.lecture = options.lecture;
     this.derniere = maintenant();
   }
 
@@ -31,12 +34,13 @@ export class Chrono {
   visible(v: boolean): void {
     this.estVisible = v;
     if (v) this.interaction();
+    else this.vider(); // sur téléphone, l'onglet caché est souvent fermé ensuite sans autre événement
   }
 
   tic(): void {
     if (!this.estVisible) return;
     if (this.joue) this.enAttente.ecoute++;
-    else if (this.maintenant() - this.derniere <= 60_000) this.enAttente.lecture++;
+    else if (this.lecture && this.maintenant() - this.derniere <= 60_000) this.enAttente.lecture++;
     if (this.enAttente.ecoute + this.enAttente.lecture >= 15) this.vider();
   }
 

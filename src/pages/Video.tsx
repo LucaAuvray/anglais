@@ -31,7 +31,7 @@ export default function Video() {
   const [joue, setJoue] = useState(false);
   const [vue, setVue] = useState(false);
   const cible = useRef<HTMLDivElement>(null);
-  useChrono(joue);
+  useChrono(joue, false); // la page vidéo ne compte pas de « lecture » : seulement le temps où la vidéo joue
 
   useEffect(() => { api.video(id).then(setVideo).catch((e: Error) => setErreur(e.message)); }, [id]);
 

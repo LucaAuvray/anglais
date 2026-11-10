@@ -116,21 +116,23 @@ async function preparerArticles(db: DatabaseSync, deps: Deps, nombre: number): P
   return prets;
 }
 
+/** Au plus une vidéo nouvelle par chaîne et par jour, chaînes prises dans l'ordre de sources.json (les plus faciles d'abord). */
 async function ajouterVideos(db: DatabaseSync, deps: Deps) {
   const jour = jourCourant(deps.maintenant());
-  const deja = (db.prepare('SELECT COUNT(*) AS n FROM videos WHERE ajouteLe = ?').get(jour) as { n: number }).n;
-  if (deja >= VIDEOS_PAR_JOUR) return;
-  const toutes: (Awaited<ReturnType<typeof lireChaine>>[number] & { chaine: string })[] = [];
-  for (const c of deps.sources.chaines) {
-    try { for (const v of await deps.lireChaine(c.id)) toutes.push({ ...v, chaine: c.nom }); } catch (e) { noter(db, deps, 'videos', `${c.nom} : ${message(e)}`); }
-  }
+  const duJour = db.prepare('SELECT chaine FROM videos WHERE ajouteLe = ?').all(jour).map((r) => r.chaine);
+  let manque = VIDEOS_PAR_JOUR - duJour.length;
   const connue = db.prepare('SELECT 1 FROM videos WHERE youtubeId = ?');
   const inserer = db.prepare('INSERT OR IGNORE INTO videos (youtubeId, titre, chaine, publieLe, ajouteLe) VALUES (?, ?, ?, ?, ?)');
-  toutes
-    .filter((v) => !connue.get(v.youtubeId))
-    .sort((a, b) => b.publieLe.localeCompare(a.publieLe))
-    .slice(0, VIDEOS_PAR_JOUR - deja)
-    .forEach((v) => inserer.run(v.youtubeId, v.titre, v.chaine, v.publieLe, jour));
+  for (const c of deps.sources.chaines) {
+    if (manque <= 0) break;
+    if (duJour.includes(c.nom)) continue;
+    let videos: Awaited<ReturnType<typeof lireChaine>>;
+    try { videos = await deps.lireChaine(c.id); } catch (e) { noter(db, deps, 'videos', `${c.nom} : ${message(e)}`); continue; }
+    const v = videos.filter((x) => !connue.get(x.youtubeId)).sort((a, b) => b.publieLe.localeCompare(a.publieLe))[0];
+    if (!v) continue;
+    inserer.run(v.youtubeId, v.titre, c.nom, v.publieLe, jour);
+    manque--;
+  }
 }
 
 /** Archive les non-lus de plus de 7 jours, complète jusqu'à `cible` non-lus, ajoute les vidéos du jour. */

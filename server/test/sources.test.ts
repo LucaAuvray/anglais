@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from 'vitest';
-import { choisirSujets, extraireTexte } from '../src/sources.ts';
+import { choisirSujets, extraireTexte, telecharger } from '../src/sources.ts';
 
 const fixture = readFileSync(new URL('./fixtures/article.html', import.meta.url), 'utf8');
 
@@ -21,6 +21,11 @@ test("extraireTexte garde le corps de l'article, sans menu ni pied de page", () 
 
 test('extraireTexte sépare les paragraphes au lieu de les coller', () => {
   expect(extraireTexte(fixture)).toContain('this season.\n\nThe first goal');
+});
+
+test('telecharger refuse ce qui n’est pas http(s) : un flux ne peut pas faire lire un fichier local', async () => {
+  await expect(telecharger('file:///etc/passwd')).rejects.toThrow('adresse refusée');
+  await expect(telecharger('-o/tmp/x')).rejects.toThrow('adresse refusée');
 });
 
 test('page presque vide → null', () => {

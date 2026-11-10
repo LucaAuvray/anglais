@@ -1,17 +1,26 @@
+import { execFile } from 'node:child_process';
 import { Readability } from '@mozilla/readability';
 import { parseHTML } from 'linkedom';
 import Parser from 'rss-parser';
 import { SUJETS, type Sujet } from './types.ts';
 
-// En-tête de navigateur générique : certains sites refusent les clients sans User-Agent.
-const ENTETES = { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36' };
 const parser = new Parser<object, { 'yt:videoId'?: string }>({ customFields: { item: ['yt:videoId'] } });
+const NAVIGATEUR = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 
-/** Télécharge une page ou un flux ; rejette au bout de 20 s ou sur un statut d'erreur. */
-export async function telecharger(url: string): Promise<string> {
-  const r = await fetch(url, { headers: ENTETES, signal: AbortSignal.timeout(20_000) });
-  if (!r.ok) throw new Error(`${url} : HTTP ${r.status}`);
-  return r.text();
+/**
+ * Télécharge une page ou un flux par curl ; rejette au bout de 20 s ou sur un statut d'erreur.
+ * curl et non fetch : Atlas Obscura et Smithsonian refusent (403) le client HTTP de Node, pas curl.
+ */
+export function telecharger(url: string): Promise<string> {
+  // Les adresses viennent des flux : seulement http(s), jamais file:// ni une option de curl.
+  if (!/^https?:\/\//i.test(url)) return Promise.reject(new Error(`${url} : adresse refusée`));
+  return new Promise((resolve, reject) => {
+    execFile('curl', ['-fsSL', '--compressed', '--max-time', '20', '--max-filesize', '10000000',
+      '--proto', '=http,https', '--proto-redir', '=http,https', '-A', NAVIGATEUR,
+      '-H', 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', '-H', 'Accept-Language: en-GB,en;q=0.9',
+      '--', url], { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 },
+    (erreur, sortie, stderr) => (erreur ? reject(new Error(`${url} : ${stderr.trim() || erreur.message}`)) : resolve(sortie)));
+  });
 }
 
 export async function lireFlux(url: string): Promise<{ titre: string; url: string; publieLe: string }[]> {

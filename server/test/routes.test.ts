@@ -164,6 +164,12 @@ test('POST /videos/:id/vu marque la vidéo vue', async () => {
   expect((await get('/api/aujourdhui')).videos).toEqual([]);
 });
 
+test('GET /videos/:id renvoie la vidéo, même vue ; 404 sinon', async () => {
+  db.prepare("INSERT INTO videos (youtubeId, titre, chaine, publieLe, ajouteLe, vuLe) VALUES ('abc', 'A', 'C', '', '2026-11-10', '2026-11-10')").run();
+  expect(await get('/api/videos/1')).toMatchObject({ youtubeId: 'abc', titre: 'A' });
+  expect((await fetch(`${base}/api/videos/9`)).status).toBe(404);
+});
+
 test('GET /erreurs : les 50 dernières, la plus récente d’abord', async () => {
   const noter = db.prepare("INSERT INTO erreurs (quand, etape, message) VALUES (?, 'flux', ?)");
   for (let i = 0; i < 60; i++) noter.run(new Date(Date.UTC(2026, 10, 1, 0, i)).toISOString(), `n${i}`);

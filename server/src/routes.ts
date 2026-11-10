@@ -148,6 +148,12 @@ export function creerRoutes(db: DatabaseSync, options: Options = {}): Router {
     res.json({ palier: reglage('palier') });
   });
 
+  r.get('/videos/:id', (req, res) => {
+    const v = db.prepare('SELECT * FROM videos WHERE id = ?').get(Number(req.params.id));
+    if (!v) return void res.status(404).json({ error: 'Vidéo introuvable' });
+    res.json(v);
+  });
+
   r.post('/videos/:id/vu', (req, res) => {
     db.prepare('UPDATE videos SET vuLe = ? WHERE id = ?').run(new Date().toISOString(), Number(req.params.id));
     res.json({ ok: true });

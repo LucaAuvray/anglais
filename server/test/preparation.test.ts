@@ -141,6 +141,17 @@ test('au plus 2 vidéos nouvelles par jour, jamais deux fois la même', async ()
   expect(videos()).toEqual(['c1-a', 'c2-a', 'c1-b', 'c2-b']);
 });
 
+test("une vidéo par chaîne et par jour, dans l'ordre de sources.json, même si une chaîne suivante est plus récente", async () => {
+  deps.sources.chaines.push({ id: 'c3', nom: 'Chaîne 3' });
+  vi.mocked(deps.lireChaine).mockImplementation(async (id: string) => [
+    { youtubeId: `${id}-a`, titre: 'A', publieLe: id === 'c3' ? '2026-11-10T00:00:00Z' : '2026-11-01T00:00:00Z' },
+    { youtubeId: `${id}-b`, titre: 'B', publieLe: '2026-10-01T00:00:00Z' },
+  ]);
+  await completer(db, deps);
+  expect(db.prepare('SELECT youtubeId, chaine FROM videos ORDER BY id').all()).toEqual([
+    { youtubeId: 'c1-a', chaine: 'Chaîne 1' }, { youtubeId: 'c2-a', chaine: 'Chaîne 2' }]);
+});
+
 test('verrou : le second est refusé ; un verrou dont le processus est mort est repris', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'verrou-'));
   expect(preparationEnCours(dir)).toBe(false);

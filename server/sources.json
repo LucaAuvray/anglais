@@ -1,0 +1,69 @@
+{
+  "flux": {
+    "foot": [
+      "https://feeds.bbci.co.uk/sport/football/rss.xml",
+      "https://www.theguardian.com/football/rss",
+      "https://www.skysports.com/rss/11095"
+    ],
+    "politique": [
+      "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "https://www.theguardian.com/world/rss",
+      "https://feeds.npr.org/1014/rss.xml"
+    ],
+    "ia": [
+      "https://arstechnica.com/ai/feed/",
+      "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+      "https://www.technologyreview.com/topic/artificial-intelligence/feed"
+    ],
+    "histoires": [
+      "https://www.atlasobscura.com/feeds/latest",
+      "https://www.smithsonianmag.com/rss/history/",
+      "https://allthatsinteresting.com/feed"
+    ],
+    "economie": [
+      "https://feeds.bbci.co.uk/news/business/rss.xml",
+      "https://www.theguardian.com/business/economics/rss",
+      "https://feeds.npr.org/1017/rss.xml"
+    ],
+    "developpement": [
+      "https://greatergood.berkeley.edu/rss",
+      "https://www.scientificamerican.com/platform/syndication/rss/",
+      "https://www.sciencedaily.com/rss/mind_brain/psychology.xml"
+    ],
+    "culture": [
+      "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
+      "https://www.theguardian.com/film/rss",
+      "https://www.theguardian.com/books/rss"
+    ]
+  },
+  "chaines": [
+    {
+      "id": "UCqOI13PE0PHfblRAqa6N1Tg",
+      "nom": "English Stories For Ana"
+    },
+    {
+      "id": "UCpCOVO2HHStdedQtZiNsGlA",
+      "nom": "English With Nolan"
+    },
+    {
+      "id": "UCHaHD477h-FeBbVh9Sh7syA",
+      "nom": "BBC Learning English"
+    },
+    {
+      "id": "UC8M5ZidP7HVsDazrjC0zTnw",
+      "nom": "English Fiesta"
+    },
+    {
+      "id": "UCn9osWKS6h4jVctxWElQvXg",
+      "nom": "EnglishSponge"
+    },
+    {
+      "id": "UCXtj403nEjWU073xESSMi9w",
+      "nom": "English by Jay - Sprout"
+    },
+    {
+      "id": "UCvgLaFuTGGRXl0eyvBRCifA",
+      "nom": "Easy English"
+    }
+  ]
+}

@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "cmu-pronouncing-dictionary": "^3.0.0",
     "express": "^5.1.0",
     "kokoro-js": "^1.2.1",
     "zod": "^4.6.5"

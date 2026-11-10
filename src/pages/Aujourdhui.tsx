@@ -98,7 +98,7 @@ export default function Aujourdhui() {
 
       <button onClick={autres} disabled={enCours}
         className="w-full rounded-xl border border-stone-300 px-4 py-3 disabled:opacity-60 dark:border-stone-700">
-        {enCours ? 'Préparation en cours… (quelques minutes)' : 'Autres articles'}
+        {enCours ? 'Préparation en cours… (environ 7 min par article)' : 'Autres articles'}
       </button>
     </main>
   );

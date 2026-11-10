@@ -1,7 +1,8 @@
-import { mkdtempSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { expect, test } from 'vitest';
+import { config } from '../src/config.ts';
 import { choisirVoix, creerVoix, fichierMot } from '../src/voix.ts';
 
 test('un article sur quatre est britannique, les autres alternent', () => {
@@ -20,6 +21,8 @@ test.skipIf(!process.env.TEST_VOIX)('dire produit un mp3 dont la durée est plau
   const v = await creerVoix();
   const ms = await v.dire('The team scored two goals.', 'af_heart', tmp);
   await v.fermer();
+  // Le modèle est rangé avec les données, pas dans node_modules qu'un déploiement efface.
+  expect(existsSync(path.join(config.dataDir, 'modeles', 'onnx-community', 'Kokoro-82M-v1.0-ONNX'))).toBe(true);
   expect(ms).toBeGreaterThan(1000);
   expect(ms).toBeLessThan(5000);
   expect(statSync(tmp).size).toBeGreaterThan(5000);

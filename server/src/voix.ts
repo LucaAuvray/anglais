@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdirSync, renameSync } from 'node:fs';
 import path from 'node:path';
+import { config } from './config.ts';
 import type { Voix } from './types.ts';
 
 /** Voix de l'article n° n : britannique un article sur quatre, sinon les deux américaines en alternance. */
@@ -39,7 +40,9 @@ function versMp3(echantillons: Float32Array, frequence: number, fichier: string)
 /** Charge Kokoro une fois (≈ 30 s, ≈ 750 Mo) ; `dire` écrit un mp3 et renvoie sa durée en ms. */
 export async function creerVoix() {
   // Import tardif : le serveur web n'a pas à charger le moteur de voix.
-  const { KokoroTTS } = await import('kokoro-js');
+  const [{ KokoroTTS }, { env }] = await Promise.all([import('kokoro-js'), import('@huggingface/transformers')]);
+  // Par défaut le modèle (310 Mo) va dans node_modules, qu'un déploiement efface : on le range avec les données.
+  env.cacheDir = path.join(config.dataDir, 'modeles');
   const tts = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: 'fp32', device: 'cpu' });
   return {
     async dire(texte: string, voix: Voix, fichier: string): Promise<number> {

@@ -1,0 +1,10 @@
+[Unit]
+Description=Anglais : préparation chaque nuit à 4 h (heure de Paris)
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 Europe/Paris
+# Conteneur éteint à 4 h : la préparation part au démarrage suivant.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

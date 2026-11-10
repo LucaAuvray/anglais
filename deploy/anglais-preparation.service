@@ -1,0 +1,17 @@
+[Unit]
+Description=Anglais : préparation des articles et vidéos du jour
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/anglais/server
+EnvironmentFile=/etc/anglais.env
+Environment=DATA_DIR=/var/lib/anglais
+Environment=PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/local/bin/node src/preparer.ts
+# 2 : une préparation (« Autres articles ») tournait déjà ; ce n'est pas une panne.
+SuccessExitStatus=2
+# Travail de fond : passe après les autres processus du conteneur.
+Nice=10
+TimeoutStartSec=2h

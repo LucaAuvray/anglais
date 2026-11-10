@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { config } from './config.ts';
 import { ouvrir } from './db.ts';
 import { reecrire } from './ia/reecrire.ts';
+import { envoyerEnAttente } from './mnemo.ts';
 import { ajouter, completer, prendreVerrou, rendreVerrou, type SourcesJson } from './preparation.ts';
 import { extraireTexte, lireChaine, lireFlux, telecharger } from './sources.ts';
 import type { Voix } from './types.ts';
@@ -28,6 +29,9 @@ try {
   const debut = new Date().toISOString();
   const i = process.argv.indexOf('--ajouter');
   const n = i >= 0 ? await ajouter(db, deps, Number(process.argv[i + 1] ?? 2)) : await completer(db, deps);
+  // Les mots restés en attente (Mnemo injoignable au moment du « + Mnemo ») repartent chaque nuit.
+  const mnemo = await envoyerEnAttente(db);
+  if (mnemo.envoyes || mnemo.restants) console.log(`Mnemo : ${mnemo.envoyes} mot(s) envoyé(s), ${mnemo.restants} en attente.`);
   for (const e of db.prepare('SELECT etape, message FROM erreurs WHERE quand >= ? ORDER BY id').all(debut)) {
     console.error(`[${e.etape}] ${e.message}`);
   }

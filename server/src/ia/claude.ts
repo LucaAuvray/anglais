@@ -7,7 +7,8 @@ import { config } from '../config.ts';
 //  - --safe-mode : ni plugins, ni hooks, ni CLAUDE.md de la machine.
 //  - --tools '' : un simple appel de modèle, aucune action possible sur le serveur.
 //  - stream-json en sortie : il porte l'événement de quota, qui dit si l'abonnement a refusé.
-const DELAI_MS = 5 * 60_000;
+// 10 min et non 5 comme Mnemo : un article de 450 mots annoté mot à mot a pris près de 5 min (10/11/2026).
+const DELAI_MS = 10 * 60_000;
 
 export function appelerClaude(systeme: string, prompt: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -26,7 +27,7 @@ export function appelerClaude(systeme: string, prompt: string): Promise<string> 
     p.stdin.on('error', () => {});
     p.on('error', (e) => reject(new Error(`Claude Code introuvable : ${e.message}`)));
     p.on('close', (_code, signal) => {
-      if (signal) return reject(new Error("Claude n'a pas répondu en 5 minutes."));
+      if (signal) return reject(new Error("Claude n'a pas répondu en 10 minutes."));
       let result: { subtype?: string; is_error?: boolean; result?: string } | undefined;
       let refuse = false;
       for (const ligne of out.split('\n')) {

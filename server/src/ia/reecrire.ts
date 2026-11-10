@@ -32,14 +32,14 @@ const SYSTEME =
 
 function consigne(source: { titre: string; texte: string }, palier: Palier): string {
   return `Réécris cet article au niveau ${palier} : ${NIVEAUX[palier]}.
-Garde les faits de l'article, sans rien inventer. Longueur : 250 à 450 mots${palier === 'original' ? '' : ', en anglais naturel'}.
+Garde les faits de l'article, sans rien inventer. Longueur : 450 mots au plus${palier === 'original' ? '' : ', en anglais naturel'} ; un article court reste court, n'ajoute rien pour l'allonger.
 
 Réponds par ce JSON :
 { "titre": "...", "phrases": [ { "texte": "une phrase", "mots": [ { "texte": "scored", "base": "score", "sens": "a marqué", "transparent": false } ], "expressions": [ { "texte": "gave up", "base": "give up", "sens": "a abandonné" } ] } ] }
 
 Règles :
 - Une entrée de "phrases" par phrase, dans l'ordre.
-- "mots" : tous les mots de la phrase, sauf les mots-outils élémentaires (the, a, and, of, to, is, he, it…). "texte" tel qu'écrit dans la phrase ; "base" la forme de base (infinitif sans « to », singulier) ; "sens" en français, le sens dans cette phrase ; "transparent" vrai si un francophone le comprend sans aide (cognat évident : "important", "football").
+- "mots" : tous les mots de la phrase, sauf les mots-outils élémentaires (the, a, and, of, to, is, he, it…) et les noms propres (personnes, clubs, lieux, compétitions). "texte" tel qu'écrit dans la phrase ; "base" la forme de base (infinitif sans « to » pour un verbe, singulier pour un nom ; un participe employé comme adjectif reste tel quel : "injured") ; "sens" en français, le sens dans cette phrase ; "transparent" vrai si un francophone le comprend sans aide (cognat évident : "important", "football").
 - "expressions" : verbes à particule, collocations et tournures figées de la phrase, chacune en un seul bloc de mots contigus, écrite exactement comme dans la phrase.
 - Ne traduis jamais une phrase entière.
 

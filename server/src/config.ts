@@ -9,5 +9,6 @@ export const config = {
   mnemoEmail: env.MNEMO_EMAIL ?? '',
   mnemoPassword: env.MNEMO_PASSWORD ?? '',
   claudeModel: env.CLAUDE_MODEL ?? 'claude-sonnet-5-5',
-  claudeEffort: env.CLAUDE_EFFORT ?? 'medium',
+  // low : 53 s au lieu de 263 s en medium pour le même article, qualité comparable (essai du 10/11/2026).
+  claudeEffort: env.CLAUDE_EFFORT ?? 'low',
 };

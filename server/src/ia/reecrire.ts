@@ -89,10 +89,12 @@ export async function reecrire(
       .flatMap((pos, i) => {
         if (!pos) return [];
         const u = unites[i];
+        const texte = p.texte.slice(pos.debut, pos.fin);
         return [{
-          ...pos, texte: p.texte.slice(pos.debut, pos.fin), base: u.base, sens: u.sens,
+          ...pos, texte, base: u.base, sens: u.sens,
           transparent: u.transparent, expression: u.expression,
-          prononciation: u.expression ? null : prononciation(u.base),
+          // Celle du mot tel qu'écrit : la fiche l'affiche à côté de « worst », pas de « bad ».
+          prononciation: u.expression ? null : prononciation(texte),
         }];
       })
       .sort((a, b) => a.debut - b.debut);

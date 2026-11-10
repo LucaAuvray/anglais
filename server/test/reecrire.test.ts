@@ -44,8 +44,8 @@ test("une expression masque les mots qu'elle contient", async () => {
   expect(a.phrases[0].annotations[0]).toMatchObject({ debut: 3, fin: 10, base: 'give up', expression: true, transparent: false });
 });
 
-test('la prononciation est remplie, null pour une expression', async () => {
-  expect((await reecrire(src, 'A2', repondre(brut))).phrases[0].annotations[0].prononciation).toBe('/skɔr/');
+test('la prononciation est celle du mot tel qu’écrit (scored, pas score), null pour une expression', async () => {
+  expect((await reecrire(src, 'A2', repondre(brut))).phrases[0].annotations[0].prononciation).toBe('/skɔrd/');
   expect((await reecrire(src, 'A2', repondre(avecExpression))).phrases[0].annotations[0].prononciation).toBeNull();
 });
 

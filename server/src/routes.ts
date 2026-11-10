@@ -8,6 +8,7 @@ import { jourCourant } from './jour.ts';
 import { envoyerEnAttente } from './mnemo.ts';
 import { proposerPalier } from './palier.ts';
 import { preparationEnCours } from './preparation.ts';
+import { prononciation } from './prononciation.ts';
 import { PALIERS, type Mot, type Palier, type Phrase } from './types.ts';
 
 type Options = {
@@ -98,7 +99,8 @@ export function creerRoutes(db: DatabaseSync, options: Options = {}): Router {
     if (!art || !p || !a) return void res.status(404).json({ error: 'Mot introuvable' });
     if (a.transparent) return void res.status(400).json({ error: 'Mot transparent : pas de carte.' });
     db.prepare("INSERT OR IGNORE INTO mots (texte, base, sens, phrase, sujet, prononciation, expression, statut) VALUES (?, ?, ?, ?, ?, ?, ?, 'attente')")
-      .run(a.texte, a.base, a.sens, p.texte, art.sujet, a.prononciation, a.expression ? 1 : 0);
+      // La carte Mnemo met la prononciation à côté de la forme de base (« score /skɔr/ »).
+      .run(a.texte, a.base, a.sens, p.texte, art.sujet, a.expression ? null : prononciation(a.base), a.expression ? 1 : 0);
     // Sans attendre Mnemo : la lecture continue, ce qui échoue reste en attente.
     void envoyer(db).catch(() => {});
     res.json({ mot: versMot(db.prepare('SELECT * FROM mots WHERE base = ?').get(a.base)!) });

@@ -11,7 +11,7 @@ export interface Annotation {
   sens: string;                      // en français, dans cette phrase
   transparent: boolean;              // évident pour un francophone : pas de « + Mnemo »
   expression: boolean;               // plusieurs mots
-  prononciation: string | null;      // « /ˈbjutəfəl/ », null si inconnue ou ambiguë
+  prononciation: string | null;      // du mot tel qu'écrit : « /skɔrd/ », null si inconnue ou ambiguë
   audio: string | null;              // fichier du mot seul, relatif à DATA_DIR/audio
 }
 export interface Phrase { texte: string; audio: string; dureeMs: number; annotations: Annotation[] }

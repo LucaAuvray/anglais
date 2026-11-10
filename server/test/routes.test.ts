@@ -22,7 +22,7 @@ let lancerPreparation: Mock<() => void>;
 const phrases: Phrase[] = [{
   texte: 'The team scored in the stadium.', audio: 'articles/x/0.mp3', dureeMs: 2000,
   annotations: [
-    { debut: 9, fin: 15, texte: 'scored', base: 'score', sens: 'a marqué', transparent: false, expression: false, prononciation: '/skɔr/', audio: 'mots/a.mp3' },
+    { debut: 9, fin: 15, texte: 'scored', base: 'score', sens: 'a marqué', transparent: false, expression: false, prononciation: '/skɔrd/', audio: 'mots/a.mp3' },
     { debut: 23, fin: 30, texte: 'stadium', base: 'stadium', sens: 'stade', transparent: true, expression: false, prononciation: null, audio: 'mots/b.mp3' },
   ],
 }];
@@ -85,7 +85,8 @@ test('POST /articles/:id/lu puis GET /articles/lus, du plus récent au plus anci
 test('POST /mots crée le mot en attente et lance l’envoi ; 400 pour un mot transparent', async () => {
   const id = article();
   const { mot } = await post('/api/mots', { articleId: id, phrase: 0, annotation: 0 });
-  expect(mot).toMatchObject({ texte: 'scored', base: 'score', sens: 'a marqué', phrase: phrases[0].texte, sujet: 'foot', expression: false, statut: 'attente' });
+  // La carte Mnemo écrit « a marqué — score /skɔr/ » : prononciation de la forme de base, pas du mot du texte.
+  expect(mot).toMatchObject({ texte: 'scored', base: 'score', sens: 'a marqué', phrase: phrases[0].texte, sujet: 'foot', expression: false, statut: 'attente', prononciation: '/skɔr/' });
   expect(envoyer).toHaveBeenCalledTimes(1);
   expect((await brut('/api/mots', { articleId: id, phrase: 0, annotation: 1 })).status).toBe(400);
   expect((await get('/api/mots')).map((m: { base: string }) => m.base)).toEqual(['score']);

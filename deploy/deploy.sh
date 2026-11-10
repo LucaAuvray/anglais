@@ -44,7 +44,10 @@ if [ -s "$VERROU" ] && kill -0 "$(cat "$VERROU")" 2>/dev/null; then
   exit 1
 fi
 rm -rf "$NOUVEAU" && mkdir -p "$NOUVEAU"
-tar -xf /tmp/anglais.tar -C "$NOUVEAU" && rm /tmp/anglais.tar
+# --no-same-owner : l'archive vient de Windows (uid 197609), inconnu du conteneur.
+# Deux commandes séparées : dans « a && b », un échec de a n'arrête pas set -e.
+tar --no-same-owner -xf /tmp/anglais.tar -C "$NOUVEAU"
+rm /tmp/anglais.tar
 npm --prefix "$NOUVEAU/server" ci --omit=dev --no-audit --no-fund --loglevel=error
 
 # Sauvegarde AVANT le redémarrage : ouvrir() crée les tables au démarrage.

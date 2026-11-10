@@ -154,7 +154,9 @@ Fonctionnalités sans preuve ou contredites par le rapport :
   apprenants au départ. Les contenus de natifs avec aides (double sous-titre) viendront vers B1-B2.
 - Priorité de vocabulaire au départ : les 2 000 à 3 000 mots les plus fréquents, dans Mnemo.
 - **Voix** : open source, gratuite, générée sur le serveur (essai d'écoute validé par Luca le
-  10/11/2026 : Kokoro et Piper jugées bonnes). Pas de service de voix payant.
+  10/11/2026 : Kokoro et Piper jugées bonnes). Pas de service de voix payant. Moteur retenu :
+  **Kokoro** (mesuré sur le conteneur le 10/11/2026 : 19,4 s d'audio générées en 12,6 s,
+  rapport 0,65 pour un seuil de 1 ; pic mémoire 759 Mo ; chargement du modèle 27 s).
 - **Accent** : américain comme modèle principal (prononciation affichée, voix par défaut) ;
   une voix britannique lit régulièrement des articles, pour habituer l'oreille aux deux.
 - **Lien Mnemo** : par ses routes existantes (`/api/auth/login`, `/api/cards/batch`), sans
@@ -162,14 +164,16 @@ Fonctionnalités sans preuve ou contredites par le rapport :
 - **Socle technique**, le même que Mnemo : React, Vite, Tailwind et TypeScript pour
   l'interface ; Express et SQLite pour le serveur. Hébergé dans un conteneur LXC sur le
   Proxmox de Luca (4 cœurs, 4 Gio, 16 Gio de disque), en service systemd, **sans Docker**,
-  comme Mnemo en production. Pas de connexion par compte.
+  comme Mnemo en production. Pas de connexion par compte. Conteneur : CT 114 `anglais-luca`
+  sur le Proxmox `Pve`, Debian 13, Node 26 dans `/opt/node26` (liens dans `/usr/local/bin`),
+  ffmpeg, Tailscale. Ses limites sont des plafonds (rien n'est réservé aux dépens des autres).
 - **IA** : Claude par l'abonnement de Luca (outil `claude` lancé par le serveur), sans secours.
 - Conception de la brique 1 : `docs/superpowers/specs/2026-11-10-ecoute-lecture-design.md`.
 
 ## Décisions ouvertes
 
 À trancher avec Luca le moment venu :
-- Brique 1 : quel conteneur LXC (existant ou à créer) et l'adresse de Mnemo vue depuis lui.
+- Brique 1 : l'adresse de Mnemo vue depuis le conteneur.
 - Briques 2 à 4 : tout reste à concevoir, une brique à la fois (reconnaissance vocale et
   voix pour l'oral, forme des sessions, règles de progression).
 

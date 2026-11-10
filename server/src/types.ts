@@ -20,7 +20,7 @@ export interface Article {
   phrases: Phrase[]; mots: number; dureeMs: number;
   statut: 'pret' | 'lu' | 'archive'; creeLe: string; luLe: string | null; touches: number | null;
 }
-export interface Video { id: number; youtubeId: string; titre: string; chaine: string; publieLe: string; vuLe: string | null }
+export interface Video { id: number; youtubeId: string; titre: string; chaine: string; publieLe: string; ajouteLe: string; vuLe: string | null }
 export interface Mot {
   id: number; texte: string; base: string; sens: string; phrase: string; sujet: Sujet;
   prononciation: string | null; expression: boolean; statut: 'attente' | 'envoye';

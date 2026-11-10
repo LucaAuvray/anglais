@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS videos (
   titre TEXT NOT NULL,
   chaine TEXT NOT NULL,
   publieLe TEXT NOT NULL,
+  ajouteLe TEXT NOT NULL,
   vuLe TEXT
 );
 CREATE TABLE IF NOT EXISTS mots (

@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import type { Voix } from './types.ts';
 
@@ -15,17 +15,23 @@ export function fichierMot(texte: string, voix: Voix): string {
   return `mots/${voix}-${createHash('sha256').update(texte).digest('hex').slice(0, 16)}.mp3`;
 }
 
-/** Encode des échantillons flottants mono en mp3 96 kb/s. */
+/** Encode des échantillons flottants mono en mp3 96 kb/s. Le fichier n'apparaît qu'une fois complet. */
 function versMp3(echantillons: Float32Array, frequence: number, fichier: string): Promise<void> {
   mkdirSync(path.dirname(fichier), { recursive: true });
+  // Écrit à côté puis renomme : un mp3 tronqué serait sinon pris pour un mot déjà généré.
+  const partiel = `${fichier}.part`;
   return new Promise((resolve, reject) => {
     const p = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'f32le', '-ar', String(frequence), '-ac', '1',
-      '-i', 'pipe:0', '-b:a', '96k', fichier]);
+      '-i', 'pipe:0', '-b:a', '96k', '-f', 'mp3', partiel]);
     let erreur = '';
     p.stderr.on('data', (d) => (erreur += d));
     p.stdin.on('error', () => {}); // ffmpeg absent : l'erreur arrive par 'error' ci-dessous
     p.on('error', (e) => reject(new Error(`ffmpeg introuvable : ${e.message}`)));
-    p.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`ffmpeg a échoué : ${erreur.slice(0, 200)}`))));
+    p.on('close', (code) => {
+      if (code !== 0) return reject(new Error(`ffmpeg a échoué : ${erreur.slice(0, 200)}`));
+      renameSync(partiel, fichier);
+      resolve();
+    });
     p.stdin.end(Buffer.from(echantillons.buffer, echantillons.byteOffset, echantillons.byteLength));
   });
 }

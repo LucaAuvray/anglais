@@ -7,6 +7,7 @@
     "dev": "node --watch --env-file-if-exists=.env src/index.ts",
     "build": "tsc",
     "start": "node src/index.ts",
+    "preparer": "node --env-file-if-exists=.env src/preparer.ts",
     "test": "vitest run"
   },
   "dependencies": {

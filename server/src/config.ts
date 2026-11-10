@@ -1,10 +1,13 @@
 import path from 'node:path';
 
 const env = process.env;
+const dataDir = env.DATA_DIR ?? path.join(import.meta.dirname, '..', 'data');
 
 export const config = {
   port: Number(env.PORT ?? 3010),
-  dataDir: env.DATA_DIR ?? path.join(import.meta.dirname, '..', 'data'),
+  dataDir,
+  dbFile: path.join(dataDir, 'anglais.db'),
+  audioDir: path.join(dataDir, 'audio'),
   mnemoUrl: env.MNEMO_URL ?? '',
   mnemoEmail: env.MNEMO_EMAIL ?? '',
   mnemoPassword: env.MNEMO_PASSWORD ?? '',

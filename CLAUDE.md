@@ -13,17 +13,28 @@ conçue à partir de nos recherches et non d'intuitions.
   de presse en anglais et environ 15 % d'une vidéo sans sous-titres français. Soit autour de
   A2 en lecture et plus bas en écoute : les contenus de natifs sont hors de portée au départ.
 - **Cible réaliste** : C2 fonctionnel avec un léger accent, pas « indiscernable d'un natif ».
-- **État** : brique 1 en construction sur la branche `brique-1-ecoute-lecture`, suivant
-  `docs/superpowers/plans/2026-11-10-ecoute-lecture.md`. Ne rien supposer au-delà : trancher avec Luca.
-- Garder ce fichier **sous 200 lignes**.
+- **État** : brique 1 sur la branche `brique-1-ecoute-lecture` (plan : `docs/superpowers/plans/`).
+  Ne rien supposer au-delà : trancher avec Luca. Garder ce fichier **sous 200 lignes**.
 
 ## Commandes
 
-- Interface : `npm run dev` (port 3000, relaie `/api` vers 3010), `npm run build`, `npm test`.
+- Interface : `npm run dev` (port 3000, relaie `/api` et `/audio` vers 3010), `npm run build`, `npm test`.
 - Serveur : `npm --prefix server run dev`, `npm --prefix server test`, un seul test :
-  `npm --prefix server test -- test/db.test.ts -t "<nom>"`, types : `npm --prefix server run build`.
+  `npm --prefix server test -- test/db.test.ts -t "<nom>"`, types : `npm --prefix server run build`,
+  préparation à la main : `npm --prefix server run preparer` (`-- --ajouter 2`). Voix réelle : `TEST_VOIX=1`.
 - Node 26 exécute le TypeScript du serveur tel quel (pas de compilation) : imports relatifs
   avec l'extension `.ts`, syntaxe effaçable seulement (pas d'`enum`). Base : `node:sqlite`.
+- Déployer : `deploy/deploy.sh` depuis le PC sous Git Bash (dépôt propre exigé, déploie HEAD).
+
+## Architecture (brique 1)
+
+- `server/src/preparer.ts`, lancé par le minuteur de 4 h ou par « Autres articles » : flux
+  (`sources.json`, téléchargement par curl) → texte (Readability) → réécriture et annotations
+  par la CLI `claude` (`ia/`) → audio Kokoro des phrases et des mots (`voix.ts`) → SQLite.
+- `server/src/index.ts` et `routes.ts` : API sous `/api`, mp3 sous `/audio`, interface construite
+  (`STATIC_DIR`). `mnemo.ts` : deux cartes par mot, renvoi des mots en attente.
+- `src/pages/` : écrans ; `src/lecteur/` : découpage des phrases, chrono, lecteur audio, fiche.
+- Sur le CT : code `/opt/anglais`, données `/var/lib/anglais`, config `/etc/anglais.env` (600).
 
 ## Sources de vérité
 
@@ -161,26 +172,22 @@ Fonctionnalités sans preuve ou contredites par le rapport :
   apprenants au départ. Les contenus de natifs avec aides (double sous-titre) viendront vers B1-B2.
 - Priorité de vocabulaire au départ : les 2 000 à 3 000 mots les plus fréquents, dans Mnemo.
 - **Voix** : open source, gratuite, générée sur le serveur (essai d'écoute validé par Luca le
-  10/11/2026 : Kokoro et Piper jugées bonnes). Pas de service de voix payant. Moteur retenu :
-  **Kokoro** (mesuré sur le conteneur le 10/11/2026 : 19,4 s d'audio générées en 12,6 s,
-  rapport 0,65 pour un seuil de 1 ; pic mémoire 759 Mo ; chargement du modèle 27 s).
+  10/11/2026). Pas de voix payante. Retenu : **Kokoro** (sur le CT : 19,4 s d'audio en 12,6 s, pic 759 Mo).
 - **Accent** : américain comme modèle principal (prononciation affichée, voix par défaut) ;
   une voix britannique lit régulièrement des articles, pour habituer l'oreille aux deux.
-- **Lien Mnemo** : par ses routes existantes (`/api/auth/login`, `/api/cards/batch`), sans
-  modifier Mnemo. Code de Mnemo : `C:\Users\lucaa\Documents\Projet\Mnemo`.
+- **Lien Mnemo** : ses routes existantes, sans le modifier ; code : `C:\Users\lucaa\Documents\Projet\Mnemo`.
 - **Socle technique**, le même que Mnemo : React, Vite, Tailwind et TypeScript pour
   l'interface ; Express et SQLite pour le serveur. Hébergé dans un conteneur LXC sur le
   Proxmox de Luca (4 cœurs, 4 Gio, 16 Gio de disque), en service systemd, **sans Docker**,
   comme Mnemo en production. Pas de connexion par compte. Conteneur : CT 114 `anglais-luca`
   sur le Proxmox `Pve`, Debian 13, Node 26 dans `/opt/node26` (liens dans `/usr/local/bin`),
-  ffmpeg, Tailscale. Ses limites sont des plafonds (rien n'est réservé aux dépens des autres).
+  ffmpeg, Tailscale. Ses limites sont des plafonds. Mnemo vu du CT : `http://100.106.70.83`.
 - **IA** : Claude par l'abonnement de Luca (outil `claude` lancé par le serveur), sans secours.
 - Conception de la brique 1 : `docs/superpowers/specs/2026-11-10-ecoute-lecture-design.md`.
 
 ## Décisions ouvertes
 
 À trancher avec Luca le moment venu :
-- Brique 1 : l'adresse de Mnemo vue depuis le conteneur.
 - Briques 2 à 4 : tout reste à concevoir, une brique à la fois (reconnaissance vocale et
   voix pour l'oral, forme des sessions, règles de progression).
 

@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
-    proxy: { '/api': 'http://localhost:3010' },
+    proxy: { '/api': 'http://localhost:3010', '/audio': 'http://localhost:3010' },
   },
   test: { include: ['src/**/*.test.ts'] },
 });

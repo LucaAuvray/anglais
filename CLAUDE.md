@@ -13,10 +13,17 @@ conçue à partir de nos recherches et non d'intuitions.
   de presse en anglais et environ 15 % d'une vidéo sans sous-titres français. Soit autour de
   A2 en lecture et plus bas en écoute : les contenus de natifs sont hors de portée au départ.
 - **Cible réaliste** : C2 fonctionnel avec un léger accent, pas « indiscernable d'un natif ».
-- **État** : aucune ligne de code. La brique 1 est conçue, pas encore construite (voir
-  « Décisions prises »). Ne rien supposer au-delà : trancher avec Luca.
-- Quand le code existe, ajouter ici les commandes (build, lint, tests, lancer un seul test)
-  et l'architecture, en gardant ce fichier **sous 200 lignes**.
+- **État** : brique 1 en construction sur la branche `brique-1-ecoute-lecture`, suivant
+  `docs/superpowers/plans/2026-11-10-ecoute-lecture.md`. Ne rien supposer au-delà : trancher avec Luca.
+- Garder ce fichier **sous 200 lignes**.
+
+## Commandes
+
+- Interface : `npm run dev` (port 3000, relaie `/api` vers 3010), `npm run build`, `npm test`.
+- Serveur : `npm --prefix server run dev`, `npm --prefix server test`, un seul test :
+  `npm --prefix server test -- test/db.test.ts -t "<nom>"`, types : `npm --prefix server run build`.
+- Node 26 exécute le TypeScript du serveur tel quel (pas de compilation) : imports relatifs
+  avec l'extension `.ts`, syntaxe effaçable seulement (pas d'`enum`). Base : `node:sqlite`.
 
 ## Sources de vérité
 

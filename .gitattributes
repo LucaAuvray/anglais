@@ -1,0 +1,2 @@
+# Fichiers en LF partout : deploy.sh et les unités systemd partent tels quels vers Linux.
+* text=auto eol=lf

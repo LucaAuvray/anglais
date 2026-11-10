@@ -10,9 +10,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@mozilla/readability": "^0.6.0",
     "cmu-pronouncing-dictionary": "^3.0.0",
     "express": "^5.1.0",
     "kokoro-js": "^1.2.1",
+    "linkedom": "^0.18.15",
+    "rss-parser": "^3.13.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

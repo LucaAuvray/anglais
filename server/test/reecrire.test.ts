@@ -65,6 +65,14 @@ test('la consigne transmet le palier et le texte source', async () => {
   expect(recu).toContain(src.texte);
 });
 
+test("la consigne fait annoter modaux et prépositions, et n'exclut qu'une liste fermée de mots", async () => {
+  let recu = '';
+  await reecrire(src, 'A2', async (_systeme, prompt) => { recu = prompt; return JSON.stringify(brut); });
+  for (const mot of ['must', 'might', 'would', 'over', 'yet']) expect(recu).toMatch(new RegExp(`\\b${mot}\\b`));
+  expect(recu).toContain('a, an, the, and, or, but');
+  expect(recu).not.toContain('mots-outils élémentaires');
+});
+
 test('localiser respecte les limites de mot', () => {
   expect(localiser('He is in the inn.', [{ texte: 'in' }])).toEqual([{ debut: 6, fin: 8 }]);
 });

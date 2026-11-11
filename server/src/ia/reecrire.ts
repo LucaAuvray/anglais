@@ -27,6 +27,11 @@ const NIVEAUX: Record<Palier, string> = {
   'original': "garder les phrases et les mots d'origine ; si le texte dépasse 450 mots, couper des paragraphes entiers",
 };
 
+// Liste fermée : « mots-outils élémentaires » laissait Claude sauter modaux, over, yet… (retour de Luca, 11/11/2026).
+const JAMAIS = ['a', 'an', 'the', 'and', 'or', 'but', 'I', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
+  'my', 'your', 'his', 'its', 'our', 'their', 'am', 'is', 'are', 'was', 'were', 'be', 'to', 'of', 'in', 'on', 'at', 'for', 'with',
+  'this', 'that', 'not'];
+
 const SYSTEME =
   "Tu réécris des articles de presse en anglais pour un apprenant francophone. Réponds uniquement par le JSON demandé, sans texte autour ni bloc de code.";
 
@@ -39,7 +44,7 @@ Réponds par ce JSON :
 
 Règles :
 - Une entrée de "phrases" par phrase, dans l'ordre.
-- "mots" : tous les mots de la phrase, sauf les mots-outils élémentaires (the, a, and, of, to, is, he, it…) et les noms propres (personnes, clubs, lieux, compétitions). "texte" tel qu'écrit dans la phrase ; "base" la forme de base (infinitif sans « to » pour un verbe, singulier pour un nom ; un participe employé comme adjectif reste tel quel : "injured") ; "sens" en français, le sens dans cette phrase ; "transparent" vrai si un francophone le comprend sans aide (cognat évident : "important", "football").
+- "mots" : TOUS les mots de la phrase, y compris les modaux (must, might, would, could…), les prépositions et adverbes (over, yet, still, already, despite…), les connecteurs (although, whose…) et les nombres. Deux exceptions seulement : les noms propres (personnes, clubs, lieux, compétitions, marques) et ces mots, jamais annotés : ${JAMAIS.join(', ')}. "texte" tel qu'écrit dans la phrase ; "base" la forme de base (infinitif sans « to » pour un verbe, singulier pour un nom ; un participe employé comme adjectif reste tel quel : "injured") ; "sens" en français, le sens dans cette phrase ; "transparent" vrai si un francophone le comprend sans aide (cognat évident : "important", "football").
 - "expressions" : verbes à particule, collocations et tournures figées de la phrase, chacune en un seul bloc de mots contigus, écrite exactement comme dans la phrase.
 - Ne traduis jamais une phrase entière.
 

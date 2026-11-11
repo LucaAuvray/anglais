@@ -35,6 +35,22 @@ const JAMAIS = ['a', 'an', 'the', 'and', 'or', 'but', 'I', 'you', 'he', 'she', '
 const SYSTEME =
   "Tu réécris des articles de presse en anglais pour un apprenant francophone. Réponds uniquement par le JSON demandé, sans texte autour ni bloc de code.";
 
+/** Paragraphes entiers jusqu'à `max` mots : un long format allongerait l'appel et le quota, la sortie fait au plus 450 mots. */
+function couper(texte: string, max: number): string {
+  const gardes: string[] = [];
+  let n = 0;
+  for (const p of texte.split(/\n\s*\n/)) {
+    const mots = p.split(/\s+/).filter(Boolean);
+    if (n + mots.length > max) {
+      if (gardes.length === 0) gardes.push(mots.slice(0, max).join(' ')); // un seul paragraphe géant
+      break;
+    }
+    gardes.push(p);
+    n += mots.length;
+  }
+  return gardes.join('\n\n');
+}
+
 function consigne(source: { titre: string; texte: string }, palier: Palier): string {
   return `Réécris cet article au niveau ${palier} : ${NIVEAUX[palier]}.
 Garde les faits de l'article, sans rien inventer. Longueur : 450 mots au plus${palier === 'original' ? '' : ', en anglais naturel'} ; un article court reste court, n'ajoute rien pour l'allonger.
@@ -51,7 +67,7 @@ Règles :
 Titre d'origine : ${source.titre}
 
 Article d'origine :
-${source.texte}`;
+${couper(source.texte, 1500)}`;
 }
 
 /** Positions de chaque unité dans le texte : sans casse, sur des limites de mot, de gauche à droite, sans chevauchement. */

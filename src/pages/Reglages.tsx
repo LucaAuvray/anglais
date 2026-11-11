@@ -7,14 +7,22 @@ const NOMS: Record<Palier, string> = { 'A2': 'A2', 'A2+': 'A2+', 'B1': 'B1', 'B1
 export default function Reglages() {
   const [palier, setPalier] = useState<Palier | null>(null);
   const [erreurs, setErreurs] = useState<Erreur[]>([]);
+  const [alerte, setAlerte] = useState('');
   useEffect(() => {
     api.reglages().then((r) => setPalier(r.palier)).catch(() => {});
     api.erreurs().then(setErreurs).catch(() => {});
   }, []);
 
   async function changer(p: Palier) {
+    const avant = palier;
     setPalier(p);
-    await api.changerPalier(p);
+    setAlerte('');
+    try {
+      await api.changerPalier(p);
+    } catch (e) {
+      setPalier(avant); // la liste ne doit pas montrer un niveau que le serveur n'a pas enregistré
+      setAlerte(`Niveau non changé : ${(e as Error).message}`);
+    }
   }
 
   return (
@@ -28,6 +36,7 @@ export default function Reglages() {
           </select>
         </label>
         <p className="mt-2 text-sm text-stone-500">Les articles déjà prêts gardent leur niveau.</p>
+        {alerte && <p role="alert" className="mt-2 text-sm text-red-700 dark:text-red-400">{alerte}</p>}
       </section>
 
       <section>

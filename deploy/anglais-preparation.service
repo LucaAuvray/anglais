@@ -11,6 +11,11 @@ Environment=DATA_DIR=/var/lib/anglais
 Environment=PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
 Environment=HOME=/root
 ExecStart=/usr/local/bin/node src/preparer.ts
+# Même bac à sable que anglais.service.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/anglais /root
 # 2 : une préparation (« Autres articles ») tournait déjà ; ce n'est pas une panne.
 SuccessExitStatus=2
 # Travail de fond : passe après les autres processus du conteneur.

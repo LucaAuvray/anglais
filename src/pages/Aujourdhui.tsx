@@ -8,6 +8,7 @@ export default function Aujourdhui() {
   const [jour, setJour] = useState<Jour | null>(null);
   const [erreur, setErreur] = useState('');
   const [lance, setLance] = useState(false);
+  const [alerte, setAlerte] = useState('');
 
   const charger = useCallback(() => {
     api.aujourdhui().then((j) => { setJour(j); setErreur(''); }).catch((e: Error) => setErreur(e.message));
@@ -30,7 +31,8 @@ export default function Aujourdhui() {
   }
 
   async function repondre(accepte: boolean) {
-    await api.repondrePalier(accepte);
+    setAlerte('');
+    try { await api.repondrePalier(accepte); } catch (e) { setAlerte(`Réponse non enregistrée : ${(e as Error).message}`); }
     charger();
   }
 
@@ -71,6 +73,8 @@ export default function Aujourdhui() {
           </div>
         </section>
       )}
+
+      {alerte && <p role="alert" className="text-sm text-red-700 dark:text-red-400">{alerte}</p>}
 
       <section aria-label="À lire et à écouter">
         {jour.articles.length === 0 && jour.videos.length === 0 && (

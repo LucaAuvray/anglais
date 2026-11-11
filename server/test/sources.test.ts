@@ -28,6 +28,12 @@ test('telecharger refuse ce qui n’est pas http(s) : un flux ne peut pas faire 
   await expect(telecharger('-o/tmp/x')).rejects.toThrow('adresse refusée');
 });
 
+test('telecharger refuse les adresses locales et Tailscale, même derrière un nom', async () => {
+  for (const u of ['http://127.0.0.1/x', 'http://192.168.1.165/api', 'http://100.106.70.83/', 'http://[::1]/', 'http://localhost:3010/']) {
+    await expect(telecharger(u), u).rejects.toThrow('adresse locale refusée');
+  }
+});
+
 test('page presque vide → null', () => {
   expect(extraireTexte('<html><body><p>Subscribe to read.</p></body></html>')).toBeNull();
 });

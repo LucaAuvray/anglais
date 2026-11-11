@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { PanneClaude } from './ia/claude.ts';
@@ -109,6 +109,7 @@ async function preparerArticles(db: DatabaseSync, deps: Deps, nombre: number): P
   let prets = 0;
   for (const sujet of choisirSujets(nombre, tour)) {
     let essais = 0;
+    let rempli = false;
     for (const el of await elements(db, deps, sujet, cache)) {
       if (essais >= ESSAIS_PAR_ARTICLE) break;
       if (essayees.has(el.url) || connue.get(el.url)) continue;
@@ -116,10 +117,21 @@ async function preparerArticles(db: DatabaseSync, deps: Deps, nombre: number): P
       essais++;
       const r = await preparerUn(db, deps, sujet, palier, el);
       if (r === 'panne') return prets; // la voix ou Claude ne marcheront pas mieux pour l'article suivant
-      if (r === 'pret') { prets++; break; }
+      if (r === 'pret') { prets++; rempli = true; break; }
     }
+    // Murs payants, pages vides : chaque page sautée ne laisse pas de trace, la place vide si.
+    if (!rempli) noter(db, deps, 'sujet', `${sujet} : aucun article utilisable (${essais} pages essayées)`);
   }
   return prets;
+}
+
+/** Supprime les dossiers d'articles qu'aucun article ne référence (préparation tuée en plein article). Sous le verrou. */
+function supprimerOrphelins(db: DatabaseSync, deps: Deps) {
+  const dossier = path.join(deps.audioDir, 'articles');
+  if (!existsSync(dossier)) return;
+  const gardes = new Set(db.prepare("SELECT json_extract(phrases, '$[0].audio') AS a FROM articles").all()
+    .map((r) => String(r.a ?? '').split('/')[1]));
+  for (const d of readdirSync(dossier)) if (!gardes.has(d)) rmSync(path.join(dossier, d), { recursive: true, force: true });
 }
 
 /** Au plus une vidéo nouvelle par chaîne et par jour, chaînes prises dans l'ordre de sources.json (les plus faciles d'abord). */
@@ -143,6 +155,7 @@ async function ajouterVideos(db: DatabaseSync, deps: Deps) {
 
 /** Archive les non-lus de plus de 7 jours et renvoie le nombre de non-lus restants. */
 function archiverEtCompter(db: DatabaseSync, deps: Deps): number {
+  supprimerOrphelins(db, deps); // début de chaque passage, verrou pris
   const limite = new Date(deps.maintenant().getTime() - 7 * 86_400_000).toISOString();
   db.prepare("UPDATE articles SET statut = 'archive' WHERE statut = 'pret' AND creeLe < ?").run(limite);
   return (db.prepare("SELECT COUNT(*) AS n FROM articles WHERE statut = 'pret'").get() as { n: number }).n;

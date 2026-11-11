@@ -13,6 +13,12 @@ Environment=PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
 # La CLI claude range sa configuration dans $HOME, que systemd ne définit pas sans User=.
 Environment=HOME=/root
 ExecStart=/usr/local/bin/node src/index.ts
+# Bac à sable (vérifié avec systemd-run le 11/11/2026 : claude, Kokoro, curl et la base fonctionnent) :
+# système en lecture seule sauf les données et /root, où la CLI claude range sa configuration.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/anglais /root
 Restart=on-failure
 RestartSec=5
 

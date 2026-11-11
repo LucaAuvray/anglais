@@ -73,6 +73,14 @@ test("la consigne fait annoter modaux et prépositions, et n'exclut qu'une liste
   expect(recu).not.toContain('mots-outils élémentaires');
 });
 
+test('un très long article est coupé à 1 500 mots avant Claude, par paragraphes entiers', async () => {
+  const paragraphe = Array(100).fill('word').join(' ');
+  const long = { titre: 't', texte: Array(30).fill(paragraphe).join('\n\n') };
+  let recu = '';
+  await reecrire(long, 'A2', async (_systeme, prompt) => { recu = prompt; return JSON.stringify(brut); });
+  expect(recu.match(/\bword\b/g)).toHaveLength(1500);
+});
+
 test('localiser respecte les limites de mot', () => {
   expect(localiser('He is in the inn.', [{ texte: 'in' }])).toEqual([{ debut: 6, fin: 8 }]);
 });

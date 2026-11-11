@@ -91,6 +91,24 @@ test("texte introuvable → entrée sautée sans appeler l'IA", async () => {
   expect(deps.reecrire).not.toHaveBeenCalled();
 });
 
+test('une place que rien ne remplit laisse une ligne dans les erreurs', async () => {
+  deps.extraireTexte = vi.fn(() => null);
+  await completer(db, deps);
+  expect(db.prepare("SELECT message FROM erreurs WHERE etape = 'sujet' ORDER BY id").all().map((r) => r.message)).toEqual([
+    'foot : aucun article utilisable (8 pages essayées)', 'foot : aucun article utilisable (2 pages essayées)',
+    'politique : aucun article utilisable (8 pages essayées)', 'ia : aucun article utilisable (8 pages essayées)']);
+});
+
+test('les dossiers audio orphelins (préparation tuée en plein article) sont supprimés, les autres gardés', async () => {
+  await completer(db, deps);
+  const orphelin = path.join(audioDir, 'articles', 'orphelin');
+  mkdirSync(orphelin, { recursive: true });
+  writeFileSync(path.join(orphelin, '0.mp3'), 'mp3');
+  await completer(db, deps);
+  expect(existsSync(orphelin)).toBe(false);
+  expect(readdirSync(path.join(audioDir, 'articles'))).toHaveLength(4);
+});
+
 test("l'IA échoue sur un article → erreur enregistrée, article suivant essayé", async () => {
   vi.mocked(deps.reecrire).mockRejectedValueOnce(new Error('Quota atteint'));
   expect(await completer(db, deps)).toBe(4);

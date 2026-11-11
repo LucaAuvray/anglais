@@ -13,7 +13,7 @@ conçue à partir de nos recherches et non d'intuitions.
   de presse en anglais et environ 15 % d'une vidéo sans sous-titres français. Soit autour de
   A2 en lecture et plus bas en écoute : les contenus de natifs sont hors de portée au départ.
 - **Cible réaliste** : C2 fonctionnel avec un léger accent, pas « indiscernable d'un natif ».
-- **État** : brique 1 sur la branche `brique-1-ecoute-lecture` (plan : `docs/superpowers/plans/`).
+- **État** : brique 1 terminée et en service sur le CT depuis le 10/11/2026 (branche `main`).
   Ne rien supposer au-delà : trancher avec Luca. Garder ce fichier **sous 200 lignes**.
 
 ## Commandes

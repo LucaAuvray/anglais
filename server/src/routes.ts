@@ -66,7 +66,8 @@ export function creerRoutes(db: DatabaseSync, options: Options = {}): Router {
     const jour = jourCourant();
     res.json({
       articles: db.prepare(`${RESUME} WHERE statut = 'pret' ORDER BY id LIMIT 4`).all(),
-      videos: db.prepare('SELECT * FROM videos WHERE ajouteLe = ? AND vuLe IS NULL ORDER BY id').all(jour),
+      // Les 2 non vues les plus récentes, pas seulement celles du jour : si YouTube ne répond pas à 4 h, la veille reste.
+      videos: db.prepare('SELECT * FROM videos WHERE vuLe IS NULL ORDER BY ajouteLe DESC, id LIMIT 2').all(),
       temps: { jour: temps(jour), semaine: temps(lundi(jour)), total: temps('') },
       proposition: proposition(),
       preparationEnCours: preparationEnCours(dataDir),

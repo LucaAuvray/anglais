@@ -61,7 +61,8 @@ test('GET /aujourdhui : au plus 4 articles prêts, vidéos du jour non vues, tem
   const r = await get('/api/aujourdhui');
   expect(r.articles).toHaveLength(4);
   expect(r.articles[0]).toEqual({ id: 1, titre: 'Titre', sujet: 'foot', palier: 'A2', dureeMs: 2000 });
-  expect(r.videos.map((v: { youtubeId: string }) => v.youtubeId)).toEqual(['a']);
+  // Les 2 vidéos non vues les plus récentes : un jour où YouTube ne répond pas, celles de la veille restent.
+  expect(r.videos.map((v: { youtubeId: string }) => v.youtubeId)).toEqual(['a', 'c']);
   expect(r.temps).toEqual({ jour: { ecoute: 0, lecture: 0 }, semaine: { ecoute: 0, lecture: 0 }, total: { ecoute: 0, lecture: 0 } });
   expect(r.proposition).toBeNull();
   expect(r.preparationEnCours).toBe(false);

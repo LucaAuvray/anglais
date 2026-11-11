@@ -2,11 +2,12 @@ import { NavLink, Route, Routes } from 'react-router';
 import Article from './pages/Article.tsx';
 import Aujourdhui from './pages/Aujourdhui.tsx';
 import DejaLus from './pages/DejaLus.tsx';
+import Memo from './pages/Memo.tsx';
 import Mots from './pages/Mots.tsx';
 import Reglages from './pages/Reglages.tsx';
 import Video from './pages/Video.tsx';
 
-const LIENS = [['/', "Aujourd'hui"], ['/lus', 'Déjà lus'], ['/mots', 'Mots'], ['/reglages', 'Réglages']] as const;
+const LIENS = [['/', "Aujourd'hui"], ['/lus', 'Déjà lus'], ['/mots', 'Mots'], ['/memo', 'Mémo'], ['/reglages', 'Réglages']] as const;
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/video/:id" element={<Video />} />
         <Route path="/lus" element={<DejaLus />} />
         <Route path="/mots" element={<Mots />} />
+        <Route path="/memo" element={<Memo />} />
         <Route path="/reglages" element={<Reglages />} />
         <Route path="*" element={<p>Page introuvable.</p>} />
       </Routes>
